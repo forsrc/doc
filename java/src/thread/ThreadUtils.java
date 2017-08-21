@@ -24,28 +24,26 @@ public class ThreadUtils {
     private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(1);
 
     public static void main(String[] args) throws InterruptedException {
-        run(1, 1000, new FutureCallback<String>() {
-            @Override
-            public void onFailure(Throwable t) {
-                System.out.println(t.getMessage());
-            }
-
-            @Override
-            public void onSuccess(String result) {
-                // System.out.println(t.getMessage());
-            }
-        }, new Callable<String>() {
-
+        run(1, 1000, new Callable<String>() {
             @Override
             public String call() throws Exception {
 
                 return System.currentTimeMillis() + "";
             }
 
+        }, new FutureCallback<String>() {
+            @Override
+            public void onFailure(Throwable t) {
+                System.out.println(t.getMessage());
+            }
+            @Override
+            public void onSuccess(String result) {
+                // System.out.println(t.getMessage());
+            }
         });
     }
 
-    public static <T> void run(int secondsToRun, int pecordsPerSecond, FutureCallback<T> callback, Callable<T> callable)
+    public static <T> void run(int secondsToRun, int pecordsPerSecond, Callable<T> callable, FutureCallback<T> callback)
             throws InterruptedException {
         final AtomicLong sequenceNumber = new AtomicLong(0);
         final AtomicLong completed = new AtomicLong(0);
