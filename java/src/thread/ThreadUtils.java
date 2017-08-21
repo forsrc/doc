@@ -19,9 +19,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 
 public class ThreadUtils {
 
-    private static final int SECONDS_TO_RUN = 5;
+    private static final int SECONDS_TO_RUN = 1;
 
-    private static final int RECORDS_PER_SECOND = 200;
+    private static final int RECORDS_PER_SECOND = 10000;
 
     private static final ScheduledExecutorService EXECUTOR = Executors.newScheduledThreadPool(1);
 
@@ -37,7 +37,7 @@ public class ThreadUtils {
             @Override
             public void onSuccess(String result) {
                 completed.getAndIncrement();
-                System.out.println(result);
+                //System.out.println(result);
             }
         };
 
@@ -63,7 +63,7 @@ public class ThreadUtils {
             public void run() {
                 printRate(sequenceNumber, completed);
             }
-        }, 1, 1, TimeUnit.SECONDS);
+        }, 100, 100, TimeUnit.MILLISECONDS);
 
         executeAtTargetRate(EXECUTOR, putOneRecord, sequenceNumber, SECONDS_TO_RUN, RECORDS_PER_SECOND);
 
@@ -98,9 +98,9 @@ public class ThreadUtils {
                 double targetCount = Math.min(durationSeconds, secondsRun) * ratePerSecond;
 
                 while (counter.get() < targetCount) {
-                    counter.getAndIncrement();
                     try {
                         task.run();
+                        counter.getAndIncrement();
                     } catch (Exception e) {
                         System.err.println(e.getMessage());
                     }
