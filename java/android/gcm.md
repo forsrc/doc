@@ -40,7 +40,7 @@ AndroidManifest.xml
 
         <receiver android:name="com.forsrc.myandroidgcm.GcmBroadcastReceiver">
             <intent-filter android:priority="1">
-                <action android:name="com.forsrc.myandroidgcm"></action>
+                <action android:name="com.forsrc.myandroidgcm.gcmreceiver"></action>
             </intent-filter>
         </receiver>
 
