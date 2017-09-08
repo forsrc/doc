@@ -129,4 +129,208 @@ public class MainActivity extends AppCompatActivity {
 ```
 
 
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.samplesubscriber"
+    android:versionCode="1"
+    android:versionName="1.0" >
+ 
+    <uses-sdk
+        android:minSdkVersion="8"
+        android:targetSdkVersion="18" />
+     
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+ 
+    <permission
+        android:name="com.example.samplesubscriber.permission.C2D_MESSAGE"
+        android:protectionLevel="signature" />
+ 
+    <uses-permission android:name="com.example.samplesubscriber.permission.C2D_MESSAGE" />
+ 
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.example.samplesubscriber.MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <receiver
+            android:name=".GcmBroadcastReceiver"
+            android:permission="com.google.android.c2dm.permission.SEND" >
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <category android:name="com.example.samplesubscriber" />
+            </intent-filter>
+        </receiver>
+        <service android:name=".GcmIntentService" />
+    </application>
+ 
+</manifest>
 
+
+
+
+
+```
+
+```java
+
+package com.example.samplesubscriber;
+ 
+import android.app.IntentService;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
+import android.util.Log;
+ 
+import com.google.android.gms.gcm.GoogleCloudMessaging;
+ 
+public class GcmIntentService extends IntentService {
+ 
+    private static final String TAG = "GcmIntentService";
+ 
+    public GcmIntentService() {
+        super("GcmIntentService");
+    }
+ 
+    @Override
+    protected void onHandleIntent(Intent intent) {
+        Bundle extras = intent.getExtras();
+        GoogleCloudMessaging gcm = GoogleCloudMessaging.getInstance(this);
+        String messageType = gcm.getMessageType(intent);
+ 
+        if (!extras.isEmpty()) {
+            if (GoogleCloudMessaging.MESSAGE_TYPE_SEND_ERROR.equals(messageType)) {
+                Log.d(TAG, "messageType: " + messageType + ",body:" + extras.toString());
+            } else if (GoogleCloudMessaging.MESSAGE_TYPE_DELETED.equals(messageType)) {
+                Log.d(TAG, "messageType: " + messageType + ",body:" + extras.toString());
+            } else if (GoogleCloudMessaging.MESSAGE_TYPE_MESSAGE.equals(messageType)) {
+                Log.d(TAG, "messageType: " + messageType + ",body:" + extras.toString());
+                sendNotification(extras.getString("default"));
+            }
+        }
+        GcmBroadcastReceiver.completeWakefulIntent(intent);
+    }
+ 
+    private void sendNotification(String message) {
+        NotificationManager manager = 
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+ 
+        PendingIntent contentIntent = 
+                PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
+ 
+        NotificationCompat.Builder mBuilder = 
+                new NotificationCompat.Builder(this)
+        .setSmallIcon(R.drawable.ic_launcher)
+        .setContentTitle("GCM Notification")
+        .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
+        .setContentText(message);
+ 
+        mBuilder.setContentIntent(contentIntent);
+        manager.notify(0, mBuilder.build());
+    }
+}
+
+
+package com.example.samplesubscriber;
+ 
+import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.support.v4.content.WakefulBroadcastReceiver;
+ 
+public class GcmBroadcastReceiver extends WakefulBroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        ComponentName comp = 
+          new ComponentName(context.getPackageName(), GcmIntentService.class.getName());
+        startWakefulService(context, (intent.setComponent(comp)));
+        setResultCode(Activity.RESULT_OK);
+    }
+}
+
+
+package com.example.samplesubscriber;
+ 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
+ 
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+ 
+import android.app.Activity;
+import android.content.Context;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.util.Log;
+ 
+import com.google.android.gms.gcm.GoogleCloudMessaging;
+ 
+public class MainActivity extends Activity {
+     
+    private static final String TAG = MainActivity.class.getSimpleName();
+ 
+    private GoogleCloudMessaging mGcm;
+    private Context mContext;
+ 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        mContext = getApplicationContext();
+ 
+        mGcm = GoogleCloudMessaging.getInstance(this);
+        registerInBackground();
+    }
+ 
+    private void registerInBackground() {
+        new AsyncTask<Void, Void, String>() {
+            @Override
+            protected String doInBackground(Void... params) {
+                String registrationId = "";
+                try {
+                    if (mGcm == null) {
+                        mGcm = GoogleCloudMessaging.getInstance(mContext);
+                    }
+                    registrationId = mGcm.register("YOUR_SENDER_ID");
+                    Log.d(TAG, "Device registered, registration ID=" + registrationId);
+                } catch (IOException ex) {
+                    Log.e(TAG, "Error :" + ex.getMessage());
+                }
+                return registrationId;
+            }
+ 
+            @Override
+            protected void onPostExecute(String msg) {
+            }
+        }.execute(null, null, null);
+    }
+}
+
+
+```
