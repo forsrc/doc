@@ -53,6 +53,15 @@ activity_main.xml
         app:layout_constraintTop_toTopOf="parent" />
 ```
 
+string.xml
+```xml
+<resources>
+    <string name="app_name">MyAndroidGcm</string>
+
+    <string name="project_number">000</string>
+</resources>
+```
+
 
 ```java
 package com.forsrc.myandroidgcm;
