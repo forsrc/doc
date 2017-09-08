@@ -38,6 +38,12 @@ AndroidManifest.xml
             </intent-filter>
         </receiver>
 
+        <receiver android:name="com.forsrc.myandroidgcm.GcmBroadcastReceiver">
+            <intent-filter android:priority="1">
+                <action android:name="com.forsrc.myandroidgcm"></action>
+            </intent-filter>
+        </receiver>
+
         <service android:name="com.raxdenstudios.gcm.service.GCMIntentService" />
 ```
 
@@ -88,7 +94,10 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         textView = (TextView) findViewById(R.id.textView);
+        textView.setTextIsSelectable(true);
         textView.append("\n------------------\n");
+
+        final Context context = this;
         GCMHelper.getInstance().registerPlayServices(this,
                 getString(R.string.project_number),
                 new GCMHelper.OnGCMRegisterListener() {
@@ -104,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.LENGTH_SHORT).show();
                 textView.append("registrationId: " + registrationId + "\n");
                 textView.append("------------------\n");
+                sendNotification(context, registrationId);
             }
 
             @Override
@@ -112,21 +122,21 @@ public class MainActivity extends AppCompatActivity {
                         Toast.LENGTH_SHORT).show();
                 textView.append("message: " + message + "\n");
                 textView.append("------------------\n");
-                sendNotification(message);
+                sendNotification(context, message);
             }
         });
     }
 
-    private void sendNotification(String message) {
+    private void sendNotification(Context context, String message) {
         NotificationManager manager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         PendingIntent contentIntent =
-                PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
+                PendingIntent.getActivity(context, 0, new Intent(this, MainActivity.class), 0);
 
         NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.sns_gcm_icon)
+                new NotificationCompat.Builder(context)
+                        .setSmallIcon(R.drawable.ttl_osusume_icon)
                         .setContentTitle("SNS GCM Notification")
                         .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
                         .setContentText(message);
@@ -135,6 +145,76 @@ public class MainActivity extends AppCompatActivity {
         manager.notify(0, mBuilder.build());
     }
 }
+
+
+
+
+package com.forsrc.myandroidgcm;
+
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
+import android.util.Log;
+
+import com.raxdenstudios.commons.util.NotificationUtils;
+import com.raxdenstudios.gcm.GCMHelper;
+import com.raxdenstudios.gcm.model.GCMessage;
+import com.raxdenstudios.gcm.receiver.GCMSendNotificationReceiver;
+
+
+public class GcmBroadcastReceiver extends BroadcastReceiver {
+    private static final String TAG = GcmBroadcastReceiver.class.getSimpleName();
+
+    public GcmBroadcastReceiver() {
+    }
+
+    public void onReceive(Context context, Intent intent) {
+        Bundle extras = intent.getExtras();
+        Log.d(TAG, "[onReceive] handling notification with extras: " + extras != null?extras.toString():"empty");
+        if(extras != null && extras.containsKey(GCMessage.class.getSimpleName())) {
+            GCMessage message = (GCMessage)extras.getParcelable(GCMessage.class.getSimpleName());
+            if(message != null && GCMHelper.getInstance().consumeGCMMessage(context, message.getId()) != null) {
+                int defaults = -1;
+                if(message.isSound()) {
+                    defaults |= 1;
+                }
+
+                if(message.isVibrate()) {
+                    defaults |= 2;
+                }
+
+                Log.d(TAG, "[onReceive] notification with id " + message.getId() + " sended!");
+                // NotificationUtils.sendNotification(context, extras, message.getId(), com.raxdenstudios.gcm.R.drawable.ic_notification, message.getTitle(), message.getSubtitle(), message.getMessage(), message.getTicker(), defaults);
+                sendNotification(context, message.getMessage());
+            }
+        }
+
+    }
+
+    public static void sendNotification(Context context, String message) {
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+
+        PendingIntent contentIntent =
+                PendingIntent.getActivity(context, 0, new Intent(context, MainActivity.class), 0);
+
+        NotificationCompat.Builder builder =
+                new NotificationCompat.Builder(context)
+                        .setSmallIcon(R.drawable.ttl_osusume_icon)
+                        .setContentTitle("SNS GCM Notification")
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
+                        .setContentText(message);
+
+        builder.setContentIntent(contentIntent);
+        manager.notify(0, builder.build());
+    }
+}
+
 ```
 
 
