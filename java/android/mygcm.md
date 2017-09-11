@@ -208,16 +208,19 @@ public class GcmUtils {
         context.registerReceiver(broadcastReceiver, filter);
     }
 
-    public static   void broadcast(Context context, String name, String key, String value){
-        Bundle bundle = new Bundle();
+    public static void broadcast(Context context, String name, String key, String value){
         Intent intent = new Intent(name);
         intent.putExtra(key, value);
+        context.sendBroadcast(intent);
+        /*
         boolean alarmRunning = (PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_NO_CREATE) != null);
         if(alarmRunning == false) {
             PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-            alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime(), 1000, pendingIntent);
+            //alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime(), 1000, pendingIntent);
+            alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, 100, pendingIntent);
         }
+        */
     }
 
     public static void unregisterReceiver(Context context, BroadcastReceiver broadcastReceiver){
