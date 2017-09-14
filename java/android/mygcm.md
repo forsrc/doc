@@ -93,7 +93,7 @@ import com.raxdenstudios.gcm.GCMHelper;
 
 public class MainActivity extends AppCompatActivity {
 
-
+    private Handler handler = new Handler();
     TextView textView;
 
     public static final String BR_TEXT = "update_textview_action";
@@ -165,6 +165,25 @@ public class MainActivity extends AppCompatActivity {
         GcmUtils.unregisterReceiver(this, broadcastReceiver);
         super.onDestroy();
     };
+    
+    public Handler getHandler() {
+        return handler;
+    }
+    
+    public void updateTextView(String message) {
+        textView.append("message: " + message + "\n");
+                textView.append("------------------\n");
+    }
+    public static void updateTextView(MainActivity mainActivity, final String message) {
+        if (mainActivity != null) {
+            mainActivity.getHandler().post(new Runnable() {
+                @Override
+                public void run() {
+                    mainActivity.updateTextView(message);
+                }
+            });
+        }
+    }
 }
 
 
