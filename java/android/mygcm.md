@@ -10,7 +10,7 @@
 dependencies {
     compile 'com.google.android.gms:play-services:8.4.0'
     compile 'com.github.raxden:AndroidGCM:v2.2.0'
-    }
+}
 ```
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -72,7 +72,7 @@ dependencies {
 <resources>
     <string name="app_name">MyAndroidGcm</string>
 
-    <string name="project_number">105824148373</string>
+    <string name="project_number">15125189231</string>
 </resources>
 
 ```
