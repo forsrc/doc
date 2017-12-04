@@ -1,0 +1,99 @@
+
+## src/main/assembly/distribution.xml
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly
+	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+	<id>bin</id>
+	<formats>
+		<format>zip</format>
+	</formats>
+	<fileSets>
+		<fileSet>
+			<directory>target/appassembler/bin</directory>
+			<outputDirectory>bin</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>target/classes</directory>
+			<outputDirectory>config</outputDirectory>
+			<includes>
+				<include>*.yml</include>
+				<include>*.xml</include>
+				<include>*.properties</include>
+				<include>scirpt</include>
+			</includes>
+		</fileSet>
+	</fileSets>
+	<dependencySets>
+		<dependencySet>
+			<outputDirectory>lib</outputDirectory>
+		</dependencySet>
+	</dependencySets>
+</assembly>
+```
+
+
+## pom.xml
+```xml
+<plugin>
+  <groupId>org.codehaus.mojo</groupId>
+  <artifactId>appassembler-maven-plugin</artifactId>
+  <version>1.7</version>
+  <configuration>
+    <repositoryLayout>flat</repositoryLayout>
+    <repositoryName>lib</repositoryName>
+    <configurationDirectory>config</configurationDirectory>
+    <generateRepository>false</generateRepository>
+    <installArtifacts>false</installArtifacts>
+    <extraJvmArguments>-Xmx512m</extraJvmArguments>
+    <programs>
+      <program>
+        <mainClass>xxx.Main</mainClass>
+        <id>xxxx</id>
+        <platforms>
+          <platform>unix</platform>
+          <platform>windows</platform>
+        </platforms>
+      </program>
+    </programs>
+    <binFileExtensions>
+      <unix>.sh</unix>
+      <windows>.bat</windows>
+    </binFileExtensions>
+    <projectArtifactFirstInClassPath>true</projectArtifactFirstInClassPath>
+  </configuration>
+  <executions>
+    <execution>
+      <phase>package</phase>
+      <goals>
+        <goal>assemble</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+<plugin>
+  <artifactId>maven-assembly-plugin</artifactId>
+  <configuration>
+    <descriptors>
+      <descriptor>src/main/assembly/distribution.xml</descriptor>
+    </descriptors>
+    <archive>
+      <manifestEntries>
+        <Class-Path>config/</Class-Path>
+      </manifestEntries>
+    </archive>
+  </configuration>
+  <executions>
+    <execution>
+      <id>make-assembly</id>
+      <phase>package</phase>
+      <goals>
+        <goal>single</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+
+```
